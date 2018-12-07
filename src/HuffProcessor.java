@@ -52,6 +52,9 @@ public class HuffProcessor {
 		
 		// Write out the HUFF number, as well the Huff header (containing the encoding)
 		out.writeBits(BITS_PER_INT, HUFF_TREE);
+		if (myDebugLevel >= DEBUG_HIGH) {
+			System.out.printf("wrote magic number %d",HUFF_TREE);
+		}
 		writeHeader(root,out);
 		
 		
@@ -62,7 +65,7 @@ public class HuffProcessor {
 	}
 
 	private void writeCompressedBits(String[] encodings, BitInputStream in, BitOutputStream out) {
-		// Keep reading, until loop broken when bit == -1, reached end
+		// Keep reading, until loop broken when bit == -1 (reached end)
 		while(true) {
 			// Our 8-bit word read
 			int bit = in.readBits(BITS_PER_WORD);
@@ -86,12 +89,9 @@ public class HuffProcessor {
 		}
 		// Or else we will carry out a pre-order traversal writing zeros and continuing to
 		// left or right child
-		if (root.myLeft != null) {
-		    out.writeBits(1, 0);
+		else {
+		    out.writeBits(1, root.myValue);
 		    writeHeader(root.myLeft, out);
-		}
-		if (root.myRight != null) {
-		    out.writeBits(1, 0);
 		    writeHeader(root.myRight, out);
 		}
 	}
@@ -108,6 +108,9 @@ public class HuffProcessor {
 		// If root is a leaf, we have found the path for the value stored in it, assign it to encodings
 		if (root.myLeft == null && root.myRight == null) {
 			encodings[root.myValue] = path;
+			if (myDebugLevel >= DEBUG_HIGH) {
+				System.out.printf("encoding for %d is %s\n",root.myValue,path);
+			}
 			return;
 		}
 		// Else if we didn't return, we will traverse by pre-order to write into path either a 0 for left or 1 for right
@@ -129,6 +132,10 @@ public class HuffProcessor {
 		for(int index = 0; index < counts.length; index++) {
 			if(counts[index] == 0) continue;
 			pq.add(new HuffNode(index,counts[index],null,null));
+		}
+		
+		if (myDebugLevel >= DEBUG_HIGH) {
+			System.out.printf("pq created with %d nodes\n", pq.size());
 		}
 		
 		// We'll combine every two of the lightest nodes by their weight (frequency) into a single parent
